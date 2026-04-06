@@ -234,4 +234,26 @@ end)
 
 print("[AutoDoor] Pronto!")
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/t35617853-dotcom/Esp-trap/refs/heads/main/README.md?token=GHSAT0AAAAAADZVCD5LFJ7PUPVWTXXIVSMM2OSM4MQ"))()
+local Workspace = game:GetService("Workspace")
+
+local trackedTraps = {} local ignoreConnection = nil
+
+local function createHighlight(object) if not object then return end if object:FindFirstChild("ESPHighlight") then return end local h = Instance.new("Highlight") h.Name = "ESPHighlight" h.Adornee = object h.FillColor = Color3.fromRGB(255, 0, 0) h.OutlineColor = Color3.fromRGB(255, 0, 0) h.FillTransparency = 0.5 h.OutlineTransparency = 0 h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop h.Parent = object end
+
+local function removeHighlight(object) if not object then return end local h = object:FindFirstChild("ESPHighlight") if h then h:Destroy() end end
+
+local function createNameLabel(object) if not object then return end if object:FindFirstChild("ESPNameLabel") then return end local anchorPart = object.PrimaryPart or object:FindFirstChildWhichIsA("BasePart") if not anchorPart then return end local billboard = Instance.new("BillboardGui") billboard.Name = "ESPNameLabel" billboard.Adornee = anchorPart billboard.AlwaysOnTop = true billboard.Size = UDim2.new(0, 140, 0, 24) billboard.StudsOffset = Vector3.new(0, 3, 0) billboard.ResetOnSpawn = false billboard.Parent = object local label = Instance.new("TextLabel") label.Size = UDim2.new(1, 0, 1, 0) label.BackgroundTransparency = 1 label.Text = "Trap" label.TextColor3 = Color3.fromRGB(255, 0, 0) label.TextSize = 14 label.Font = Enum.Font.GothamBold label.TextStrokeTransparency = 0.4 label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0) label.Parent = billboard end
+
+local function removeNameLabel(object) if not object then return end local b = object:FindFirstChild("ESPNameLabel") if b then b:Destroy() end end
+
+local function setupTrapESP(obj) if not obj then return end if obj.Name ~= "Trap" then return end if not obj:IsA("Model") then return end if trackedTraps[obj] then return end trackedTraps[obj] = true task.wait(0.05) if not obj or not obj.Parent then trackedTraps[obj] = nil; return end createHighlight(obj) createNameLabel(obj) obj.AncestryChanged:Connect(function() if not obj.Parent then trackedTraps[obj] = nil removeHighlight(obj) removeNameLabel(obj) end end) end
+
+local function connectIgnoreFolder(ignoreFolder) for _, obj in pairs(ignoreFolder:GetChildren()) do if obj.Name == "Trap" and obj:IsA("Model") then setupTrapESP(obj) end end if ignoreConnection then ignoreConnection:Disconnect() end ignoreConnection = ignoreFolder.ChildAdded:Connect(function(obj) if obj.Name == "Trap" and obj:IsA("Model") then task.wait(0.05) setupTrapESP(obj) end end) end
+
+local function monitorTraps() task.spawn(function() local waited = 0 while waited < 30 do local ignore = Workspace:FindFirstChild("IGNORE") if ignore then connectIgnoreFolder(ignore); return end task.wait(0.5) waited = waited + 0.5 end Workspace.ChildAdded:Connect(function(child) if child.Name == "IGNORE" then connectIgnoreFolder(child) end end) end) end
+
+local function resetESP() trackedTraps = {} if ignoreConnection then ignoreConnection:Disconnect(); ignoreConnection = nil end for _, obj in pairs(Workspace:GetDescendants()) do pcall(removeHighlight, obj) pcall(removeNameLabel, obj) end end
+
+local function watchForRound() local mapsFolder = Workspace:WaitForChild("MAPS", 30) if not mapsFolder then task.delay(5, watchForRound); return end if mapsFolder:FindFirstChild("GAME MAP") then task.wait(2); monitorTraps() end mapsFolder.ChildAdded:Connect(function(child) if child.Name == "GAME MAP" then resetESP(); task.wait(2); monitorTraps() end end) mapsFolder.ChildRemoved:Connect(function(child) if child.Name == "GAME MAP" then resetESP() end end) end
+
+watchForRound()
